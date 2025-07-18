@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { measureSegments } from '@/utils/measureSegments';
 import { capitalizeFirstLetter } from '@/utils/capitalizeFirstLetter';
+import { containsSensitiveInfo } from '@/utils/containSensitiveInformation';
+import Alert from '../Alert/Alert';
 
 const MAX_LINES = 13;
 
@@ -22,6 +24,7 @@ export default function NftSvgEditor({
   const [to, setTo] = useState<string | null>(null);
   const [time, setTime] = useState<string>("");
   const [segments, setSegments] = useState<string[]>([]);
+  const [alert, setAlert] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -36,6 +39,12 @@ export default function NftSvgEditor({
     setSegments(segs);
   }, [initialText]);
 
+  useEffect(() => {
+    if (alert) {
+      setAlert(null);
+    }
+  }, [value]);
+
   const handleTextChange = (text: string) => {
     const segs = measureSegments(text);
     if (segs.length <= MAX_LINES) {
@@ -47,6 +56,34 @@ export default function NftSvgEditor({
   const handleSvgClick = () => {
     textareaRef.current?.focus();
   };
+
+  const handleSubmit = async () => {
+    const sensitive = containsSensitiveInfo(value);
+    if (sensitive) {
+      setAlert({ message: `Your message contains a ${sensitive}. Please remove it before continuing.`,
+        type: 'error' });
+      return;
+    }
+
+    const res = await fetch('/api/moderate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: value }),
+    });
+
+    const data: { ok: boolean; flagged?: boolean; error?: string } = await res.json();
+
+    if (!data.ok) {
+      setAlert({ message: data.error || 'An error occurred during moderation.', type: 'error' });
+      return;
+    }
+
+    // Continue to mint or next step
+    console.log('Message is clean — proceeding.');
+  };
+
 
   return (
     <div className="relative w-[320px] h-[360px] mx-auto">
@@ -160,6 +197,21 @@ export default function NftSvgEditor({
         autoCapitalize="off"
         id="nft-to-input"
       />
+      <button
+        onClick={handleSubmit}
+        disabled={value === ""}
+        className="absolute -bottom-12 left-0 px-4 py-2 bg-black w-full cursor-pointer text-white rounded hover:bg-gray-800 focus:outline-none"
+      >
+        Submit Note
+      </button>
+      {alert && (
+        <Alert
+          message={alert.message}
+          type={alert.type}
+          position="bottom-right"
+          onClose={() => setAlert(null)}
+        />
+      )}
     </div>
   );
 }
