@@ -5,6 +5,7 @@ import { measureSegments } from '@/utils/measureSegments';
 import { capitalizeFirstLetter } from '@/utils/capitalizeFirstLetter';
 import { containsSensitiveInfo } from '@/utils/containSensitiveInformation';
 import Alert from '../Alert/Alert';
+import { Clock } from '../Clock/Clock';
 
 const MAX_LINES = 13;
 
@@ -22,17 +23,9 @@ export default function NftSvgEditor({
 }: Props) {
   const [value, setValue] = useState(initialText);
   const [to, setTo] = useState<string | null>(null);
-  const [time, setTime] = useState<string>("");
   const [segments, setSegments] = useState<string[]>([]);
   const [alert, setAlert] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const update = () => setTime(new Date().toLocaleTimeString());
-    update(); // initial render
-    const timer = setInterval(update, 1000); // update every second
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     const segs = measureSegments(initialText);
@@ -155,7 +148,7 @@ export default function NftSvgEditor({
           fill={textColor}
           fontFamily="Arial,sans-serif"
         >
-          <tspan dy="1.2em">{time}</tspan>
+          <Clock />
         </text>
       </svg>
 
