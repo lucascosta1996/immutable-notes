@@ -6,6 +6,7 @@ import { capitalizeFirstLetter } from '@/utils/capitalizeFirstLetter';
 import { containsSensitiveInfo } from '@/utils/containSensitiveInformation';
 import Alert from '../Alert/Alert';
 import { Clock } from '../Clock/Clock';
+import { useColor } from '@/hooks/useColor';
 
 const MAX_LINES = 13;
 
@@ -18,7 +19,6 @@ type Props = {
 
 export default function NftSvgEditor({
   initialText = '',
-  backgroundColor = '#af84b4',
   textColor = '#000000',
 }: Props) {
   const [value, setValue] = useState(initialText);
@@ -26,6 +26,7 @@ export default function NftSvgEditor({
   const [segments, setSegments] = useState<string[]>([]);
   const [alert, setAlert] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { color: backgroundColor } = useColor();
 
   useEffect(() => {
     const segs = measureSegments(initialText);

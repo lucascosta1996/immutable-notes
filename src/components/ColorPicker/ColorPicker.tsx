@@ -1,33 +1,35 @@
 'use client';
 
-import { useState } from 'react';
-
-interface ColorPickerProps {
-  onColorSelect: (color: string) => void;
-}
+import React, { useCallback } from 'react';
+import { ColorPickerSwatch } from './ColorPickerSwatch';
+import { useColor } from '@/hooks/useColor';
 
 const colors: string[] = ['#af84b4', '#ccaec9', '#dad5e7', '#ddf4e3', '#b5ffb6'];
 
-export default function ColorPicker({ onColorSelect }: ColorPickerProps) {
-  const [selectedColor, setSelectedColor] = useState<string | null>('#af84b4');
+export const ColorPicker = React.memo(function ColorPicker() {
+    const { color: selectedColor, setColor } = useColor();
 
-  const handleColorClick = (color: string) => {
-    setSelectedColor(color);
-    onColorSelect(color);
-  };
+  // Keep the latest onColorSelect without changing onSelect identity
+  const latestOnSelectRef = React.useRef(setColor);
+  React.useEffect(() => {
+    latestOnSelectRef.current = setColor;
+  }, [setColor]);
+
+  const handleColorClick = useCallback((color: string) => {
+    setColor(color);                 // update the external store
+    latestOnSelectRef.current?.(color);      // optional side-effect for parents
+  }, [setColor]);
 
   return (
     <section id="color-picker" className="flex flex-col justify-items-between gap-2">
       {colors.map((color) => (
-        <div
+        <ColorPickerSwatch
           key={color}
-          className={`flex items-center border-2 border-solid border-black w-full sm:w-[65px] sm:h-[65px] cursor-pointer ${
-            selectedColor === color ? 'ring-2 ring-offset-2 ring-black' : ''
-          }`}
-          style={{ backgroundColor: color }}
-          onClick={() => handleColorClick(color)}
+          color={color}
+          selected={selectedColor === color}
+          onSelect={handleColorClick}
         />
       ))}
     </section>
   );
-}
+});
